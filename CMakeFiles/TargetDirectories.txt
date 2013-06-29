@@ -1,0 +1,3 @@
+D:/MyResearch/Kinect_Austin/build/CMakeFiles/ALL_BUILD.dir
+D:/MyResearch/Kinect_Austin/build/CMakeFiles/RunMain.dir
+D:/MyResearch/Kinect_Austin/build/CMakeFiles/ZERO_CHECK.dir
