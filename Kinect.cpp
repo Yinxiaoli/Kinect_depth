@@ -1,4 +1,4 @@
-#include "D:\MyResearch\Kinect_Austin\build\Kinect.h"
+#include "D:\MyResearch\Kinect_Austin\Kinect_depth\Kinect.h"
 #include <iostream>
 
 

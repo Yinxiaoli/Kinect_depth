@@ -93,6 +93,7 @@ int main(int argc, char** argv)
   cv::Mat depthImg, colorImg, skeletalImg, maskOverColorImg, maskImg, maskedDepthImg, labelImg;
   bool foundSkeleton;
   cv::Mat CroppedDepth, CroppedColor;
+  cv::Mat CaliDepth;
   
   cv::Size dSize = cv::Size(320, 240);
 
@@ -170,9 +171,69 @@ int main(int argc, char** argv)
 	cv::imshow("Color", colorImg);
 #endif
 
+	cvSetMouseCallback( "Depth", on_mouse, 0 );
+	//Calibration
+	{
+		cv::Point3f depthPt;
+		cv::Point3f colorPt;
+		CaliDepth = depthImg;
+		CaliDepth.setTo(0);
+
+		for (int j = 0; j < depthImg.rows; j ++)
+		{
+			uchar* data_depth= depthImg.ptr<uchar>(j); 
+			for (int i = 0; i < depthImg.cols; i ++)
+			{				
+				depthPt.z = data_depth[i] * 5.0f;	           //z, according to the previous convert factor: depthF /= 1300.0f; depthF *= 255.0f. Revert back;
+				depthPt.x = depthPt.z * (i - 324.3) / 526.7;   //x
+				depthPt.y = depthPt.z * (i - 247.8) / 525.8;   //y
+
+				//convert to color camera 2D
+				colorPt.x =  509.98f * depthPt.x - 18.124f * depthPt.y + 349.569f * depthPt.z - 11661.2f; //x
+				colorPt.y = -11.765f * depthPt.x + 512.72f * depthPt.y + 273.624f * depthPt.z + 153.29f;  //y
+				colorPt.z = -0.0496f * depthPt.x - 0.0502f * depthPt.y + 0.9975f  * depthPt.z + 7.4660f;  //w
+
+				colorPt.x = (int)(colorPt.x / colorPt.z);  //normalize by w
+				colorPt.y = (int)(colorPt.y / colorPt.z);  //normalize by w
+
+				//check boundary
+				if (colorPt.x > depthImg.cols || colorPt.x < 0 ||
+					colorPt.y > depthImg.cols || colorPt.y < 0)
+					continue;
+
+				int ii = colorPt.y;  //ii is the transformed x in color image
+				int jj = colorPt.x;  //jj is the transformed y in color image
+
+				CaliDepth.ptr<uchar>(jj)[ii] = data_depth[i]; //assign the same depth value from the original depth image with a new position (ii,jj)
+			}
+		}
+
+		cv::imshow("Cali_Depth", CaliDepth );
+		
+// 		//points in camera 3D
+// 		std::vector<cv::Vec3b> color3D;
+// 		for (int i = 0; i < depth3D.size(); i++)
+// 		{
+// 			cv::Vec3b temp;
+// 			cv::Vec3b depth_temp = depth3D[i];
+// 			depthPt.x =  0.9988 * depth_depthPt.x - 0.0035 * depth_depthPt.y + 0.0495 * depth_depthPt.z - 26.7385;
+// 			depthPt.y =  0.0010 * depth_depthPt.x + 0.9987 * depth_depthPt.y + 0.0503 * depth_depthPt.z - 3.2267;
+// 			depthPt.z = -0.0496 * depth_depthPt.x - 0.0502 * depth_depthPt.y + 0.9975 * depth_depthPt.z + 7.4660;
+// 			color3D.push_back(temp);
+// 		}
+
+		
+
+	}
+
+
+
+
+
+
 	//set Callback function, only call once per run
 
-	cvSetMouseCallback( "Depth", on_mouse, 0 );
+
 
 	if (bClicked == true)
 	{
