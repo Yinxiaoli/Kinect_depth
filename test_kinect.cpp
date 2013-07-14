@@ -52,27 +52,6 @@ void on_mouse( int event, int x, int y, int flags, void* ustc)
 		printf("Done corner points!!!");
 		bClicked = true;
 	}
-
-	/*
-	if( event == CV_EVENT_LBUTTONDOWN )  
-	{  
-		leftupPt = cvPoint(x,y);     
-	}  
-	if (event == CV_EVENT_MBUTTONDOWN )
-	{
-		rightupPt = cvPoint(x,y);  
-	}
-	if (event == CV_EVENT_RBUTTONDOWN )
-	{
-		rightDownPt = cvPoint(x,y);  
-	}
-	if (leftupPt.x != 0 && rightupPt.x != 0 && rightDownPt.x != 0 && bClicked == false)
-	{
-		leftDownPt = cvPoint(leftupPt.x, rightDownPt.y);
-		printf("Done corner points!!!");	
-		bClicked = true;
-	}
-	*/
 }  
 
 
@@ -172,6 +151,9 @@ int main(int argc, char** argv)
 #endif
 
 	cvSetMouseCallback( "Depth", on_mouse, 0 );
+
+	/*
+	***************************************************************************************************
 	//Calibration
 	{
 		cv::Point3f depthPt;
@@ -209,40 +191,20 @@ int main(int argc, char** argv)
 		}
 
 		cv::imshow("Cali_Depth", CaliDepth );
-		
-// 		//points in camera 3D
-// 		std::vector<cv::Vec3b> color3D;
-// 		for (int i = 0; i < depth3D.size(); i++)
-// 		{
-// 			cv::Vec3b temp;
-// 			cv::Vec3b depth_temp = depth3D[i];
-// 			depthPt.x =  0.9988 * depth_depthPt.x - 0.0035 * depth_depthPt.y + 0.0495 * depth_depthPt.z - 26.7385;
-// 			depthPt.y =  0.0010 * depth_depthPt.x + 0.9987 * depth_depthPt.y + 0.0503 * depth_depthPt.z - 3.2267;
-// 			depthPt.z = -0.0496 * depth_depthPt.x - 0.0502 * depth_depthPt.y + 0.9975 * depth_depthPt.z + 7.4660;
-// 			color3D.push_back(temp);
-// 		}
 
 		
-
 	}
-
-
+***************************************************************************************************
+*/
 
 
 
 
 	//set Callback function, only call once per run
 
-
-
 	if (bClicked == true)
 	{
 		//We start to process the image
-		
-// 		maskImg = cvCreateMat(colorImg.rows, colorImg.cols, CV_8UC1);
-// 		maskImg.setTo(0);
-// 		maskOverColorImg = cvCreateMat(colorImg.rows, colorImg.cols, CV_8UC1);
-// 		maskOverColorImg.setTo(0);
 
 		cv::Point leftUpCorner = ROI_Vertices[0];
 		cv::Point rightDownCorner = ROI_Vertices[1];
@@ -250,12 +212,9 @@ int main(int argc, char** argv)
 		cv::Rect myROI(leftUpCorner.x, leftUpCorner.y, rightDownCorner.x - leftUpCorner.x, rightDownCorner.y - leftUpCorner.y);
 
 		CroppedDepth = depthImg(myROI);
-
 		CroppedColor = colorImg(myROI);
 
 		//cv::bilateralFilter(CroppedDepth, CroppedDepth, CV_BILATERAL, 3, 0);
-
-
 		for (int i = 0; i < 2; i ++)
 		{
 			cv::GaussianBlur(CroppedDepth, CroppedDepth, cv::Size(3,3), 0, 0, cv::BORDER_DEFAULT);
