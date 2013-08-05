@@ -8,6 +8,7 @@
 
 #include <fstream>
 
+#include <d3d11.h>
 
 namespace ethos
 {
@@ -34,7 +35,11 @@ namespace ethos
     // no color images are retrieved, but this can be added later if necessary.
     class Kinect
     {
-    public:
+
+	  static const NUI_IMAGE_RESOLUTION   cDepthResolution = NUI_IMAGE_RESOLUTION_640x480;
+	  static const NUI_IMAGE_RESOLUTION   cColorResolution = NUI_IMAGE_RESOLUTION_640x480;
+
+	public:
       // The known image dimensions of a depth image from the Kinect
       static const int cDepthWidth    = 640;
       static const int cDepthHeight   = 480;
@@ -75,6 +80,8 @@ namespace ethos
       // safeguards so don't worry)
       void Cleanup();
 
+	  LONG* GetColorCoordinates();
+
     protected:
       // Draws a skeleton
       void Nui_DrawSkeleton( const NUI_SKELETON_DATA & skel, int windowWidth, int windowHeight, cv::Mat& canvas );
@@ -114,6 +121,18 @@ namespace ethos
       int m_TrackedSkeletons;
 
       SkeletonJoints mJoints;
+
+	  USHORT* m_depthD16;
+	  LONG m_depthWidth;
+	  LONG m_depthHeight;
+	  LONG m_colorWidth;
+	  LONG m_colorHeight;
+	  LONG* m_colorCoordinates;
+      LONG m_colorToDepthDivisor;
+
+	  BYTE* m_colorRGBX;
+
+	  ID3D11DeviceContext* m_pImmediateContext;
     };
   }
 }

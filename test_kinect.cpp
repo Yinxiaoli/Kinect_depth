@@ -198,6 +198,62 @@ int main(int argc, char** argv)
 */
 
 
+	LONG m_depthWidth = 640;
+	LONG m_depthHeight = 480;
+	LONG m_colorWidth = 640;
+	LONG m_colorHeight = 480;
+
+	LONG* m_colorCoordinates = kinect.GetColorCoordinates();
+
+	cv::Mat display(480,640,CV_8UC3,cv::Scalar(0));
+	
+
+	// loop over each row and column of the color
+	for (LONG y = 0; y < m_colorHeight; ++y)
+	{
+		LONG* pDest = (LONG*)((BYTE*)colorImg.data + colorImg.cols * y);
+		unsigned char* pColor = display.ptr<unsigned char>(y);
+		for (LONG x = 0; x < m_colorWidth; ++x, pColor += 3)
+		{
+			// calculate index into depth array
+			int depthIndex = x + y * m_depthWidth;
+
+			// retrieve the depth to color mapping for the current depth pixel
+			LONG colorInDepthX = m_colorCoordinates[depthIndex * 2];
+			LONG colorInDepthY = m_colorCoordinates[depthIndex * 2 + 1];
+
+			// make sure the depth pixel maps to a valid point in color space
+			if ( colorInDepthX >= 0 && colorInDepthX < m_colorWidth && colorInDepthY >= 0 && colorInDepthY < m_colorHeight )
+			{
+				// calculate index into color array
+				LONG colorIndex = colorInDepthX + colorInDepthY * m_colorWidth;
+
+				// set source for copy to the color pixel
+				LONG* pSrc = (LONG *)(BYTE*)colorImg.data + colorIndex;
+				*pDest = *pSrc;
+			}
+			else
+			{
+				*pDest = 0;
+			}
+
+			// Fill-in color image
+			{
+				LONG val = *pDest;
+				unsigned char* pVal = (unsigned char*)&val;
+				pColor[0] = *pVal++;
+				pColor[1] = *pVal++;
+				pColor[2] = *pVal++;
+			}
+
+			pDest++;
+		}
+	}
+
+	cv::imshow("Display", display);
+	cv::waitKey();
+
+
 
 
 	//set Callback function, only call once per run

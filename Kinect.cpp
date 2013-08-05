@@ -28,6 +28,24 @@ namespace ethos
       m_depthRGBX = new BYTE[m_numBytes];
       ZeroMemory(m_StickySkeletonIds, sizeof(m_StickySkeletonIds));
       m_TrackedSkeletons = 0;
+
+	  DWORD width = 0;
+	  DWORD height = 0;
+	  NuiImageResolutionToSize(cDepthResolution, width, height);
+	  m_depthWidth  = static_cast<LONG>(width);
+	  m_depthHeight = static_cast<LONG>(height);
+
+	  NuiImageResolutionToSize(cColorResolution, width, height);
+	  m_colorWidth  = static_cast<LONG>(width);
+	  m_colorHeight = static_cast<LONG>(height);
+
+	  m_colorToDepthDivisor = m_colorWidth/m_depthWidth;
+
+	  m_depthD16 = new USHORT[m_depthWidth*m_depthHeight];
+	  m_colorCoordinates = new LONG[m_depthWidth*m_depthHeight*2];
+	  m_colorRGBX = new BYTE[m_colorWidth*m_colorHeight*cBytesPerPixel];
+
+	  m_pImmediateContext = NULL;
     }
 
 
@@ -35,6 +53,10 @@ namespace ethos
     Kinect::~Kinect()
     {
       Cleanup();
+	  if (m_pImmediateContext) 
+	  {
+		  m_pImmediateContext->ClearState();
+	  }
     }
 
 
@@ -281,6 +303,58 @@ namespace ethos
         return false;
       }
 
+	  //////////////////////////////////////////////////////////////////////////
+
+	  m_pNuiSensor->NuiImageGetColorPixelCoordinateFrameFromDepthPixelFrameAtResolution(
+		  cColorResolution,
+		  cDepthResolution,
+		  m_depthWidth*m_depthHeight,
+		  m_depthD16,
+		  m_depthWidth*m_depthHeight*2,
+		  m_colorCoordinates
+		  );
+
+	  /*
+	  // copy to our d3d 11 color texture
+	  D3D11_MAPPED_SUBRESOURCE msT;
+	  //hr = m_pImmediateContext->Map(m_pColorTexture2D, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &msT);
+	  if ( FAILED(hr) ) { return hr; }
+
+	  // loop over each row and column of the color
+	  for (LONG y = 0; y < m_colorHeight; ++y)
+	  {
+		  LONG* pDest = (LONG*)((BYTE*)msT.pData + msT.RowPitch * y);
+		  for (LONG x = 0; x < m_colorWidth; ++x)
+		  {
+			  // calculate index into depth array
+			  int depthIndex = x/m_colorToDepthDivisor + y/m_colorToDepthDivisor * m_depthWidth;
+
+			  // retrieve the depth to color mapping for the current depth pixel
+			  LONG colorInDepthX = m_colorCoordinates[depthIndex * 2];
+			  LONG colorInDepthY = m_colorCoordinates[depthIndex * 2 + 1];
+
+			  // make sure the depth pixel maps to a valid point in color space
+			  if ( colorInDepthX >= 0 && colorInDepthX < m_colorWidth && colorInDepthY >= 0 && colorInDepthY < m_colorHeight )
+			  {
+				  // calculate index into color array
+				  LONG colorIndex = colorInDepthX + colorInDepthY * m_colorWidth;
+
+				  // set source for copy to the color pixel
+				  LONG* pSrc = (LONG *)m_colorRGBX + colorIndex;
+				  *pDest = *pSrc;
+			  }
+			  else
+			  {
+				  *pDest = 0;
+			  }
+
+			  pDest++;
+		  }
+	  }
+
+*/	  
+
+	  //////////////////////////////////////////////////////////////////////////
       INuiFrameTexture * pTexture = imageFrame.pFrameTexture;
       NUI_LOCKED_RECT LockedRect;
       pTexture->LockRect( 0, &LockedRect, NULL, 0 );
@@ -295,6 +369,11 @@ namespace ethos
       // Return success
       return true;
     }
+
+	LONG* Kinect::GetColorCoordinates()
+	{
+		return m_colorCoordinates;
+	}
 
     //----------------------------------------------------------------------------------
     bool Kinect::GetSkeletalImage(cv::Mat& skeletalImg, bool* foundSkeleton)
@@ -679,6 +758,8 @@ namespace ethos
 
         m_pNuiSensor->Release();
         m_pNuiSensor = NULL;
+
+		delete[] m_depthD16;
       }
     }
   }
